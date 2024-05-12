@@ -1,0 +1,51 @@
+version: "3.3"
+
+services:
+  freshrss:
+    image: freshrss/freshrss:${SOFTWARE_VERSION_TAG}
+    hostname: freshrss
+    restart: always
+    environment:
+      DB_HOST: ${DB_HOST}
+      DB_BASE: ${DB_BASE}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      ADMIN_API_PASSWORD: ${ADMIN_PASSWORD}
+      BASE_URL: https://${DOMAIN}
+    ports:
+      - 172.17.0.1:57488:80
+    volumes:
+      - ./storage/data:/var/www/FreshRSS/data
+      - ./storage/extensions:/var/www/FreshRSS/extensions
+
+  freshrss-db:
+    image: elestio/postgres:16
+    hostname: freshrss-db
+    restart: always
+    volumes:
+      - ./storage/db:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: ${DB_BASE:-freshrss}
+      POSTGRES_USER: ${DB_USER:-freshrss}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-freshrss}
+    command:
+      - -c
+      - shared_buffers=1GB
+      - -c
+      - work_mem=32MB
+    ports:
+      - 172.17.0.1:44900:5432
+
+  pgadmin:
+    image: elestio/pgadmin:latest
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${ADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${ADMIN_PASSWORD}
+      PGADMIN_LISTEN_PORT: 8080
+    ports:
+      - "172.17.0.1:62951:8080"
+    volumes:
+      - ./servers.json:/pgadmin4/servers.json
